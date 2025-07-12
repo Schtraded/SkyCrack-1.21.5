@@ -20,6 +20,9 @@
 		],
 		"fabric-datagen": [
 			"net.straded.skycrack.SkyCrackDataGenerator"
+		],
+		"client": [
+			"net.straded.skycrack.SkyCrackClient"
 		]
 	},
 	"mixins": [
