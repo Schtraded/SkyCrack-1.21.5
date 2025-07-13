@@ -44,14 +44,14 @@ public class ShaderManager {
             Optional<Resource> resource = resourceFactory.getResource(Identifier.of("renderer", "shader/" + name + type.fileExtension));
             int i = glCreateShader(type.glType);
             if (resource.isPresent()) {
-                GlStateManager.glShaderSource(i, String.valueOf(new GlImportProcessor() {
+                GlStateManager.glShaderSource(i, new GlImportProcessor() {
                     @SneakyThrows
                     @Nullable
                     @Override
                     public String loadImport(boolean inline, String name) {
                         return IOUtils.toString(resource.get().getInputStream(), StandardCharsets.UTF_8);
                     }
-                }.readSource(readResourceAsString(resource.get().getInputStream()))));
+                }.readSource(readResourceAsString(resource.get().getInputStream())));
             } else file_present = false;
             glCompileShader(i);
             if (glGetShaderi(i, GL_COMPILE_STATUS) == 0 || !file_present) {
