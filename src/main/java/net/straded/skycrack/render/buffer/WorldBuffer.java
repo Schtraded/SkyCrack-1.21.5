@@ -45,12 +45,9 @@ public class WorldBuffer {
         glEnableVertexAttribArray(1);
 
         BufferManager.unbindBuffer();
-
         shader.bind();
         BufferManager.draw(drawMode, this.vertices.size());
-
         shader.unbind();
-
         BufferManager.unbind();
     }
 

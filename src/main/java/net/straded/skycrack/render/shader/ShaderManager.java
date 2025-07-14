@@ -5,6 +5,7 @@ import com.mojang.blaze3d.platform.TextureUtil;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
+import lombok.val;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.GlImportProcessor;
@@ -21,6 +22,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import static org.lwjgl.opengl.GL33.*;
 
@@ -30,55 +33,68 @@ public class ShaderManager {
     private static Shader positionColorShader;
 
     public static void init() {
-        ClientLifecycleEvents.CLIENT_STARTED.register(client -> loadShader());
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+            try {
+                loadShader();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
-    private static void loadShader() {
+    private static void loadShader() throws IOException {
         positionColorShader = new Shader("position_color");
     }
 
-    public static int loadShaderProgram(String name, ShaderType type) {
-        try {
-            boolean file_present = true;
-            ResourceFactory resourceFactory = MinecraftClient.getInstance().getResourceManager();
-            Optional<Resource> resource = resourceFactory.getResource(Identifier.of("renderer", "shader/" + name + type.fileExtension));
-            int i = glCreateShader(type.glType);
-            if (resource.isPresent()) {
-                GlStateManager.glShaderSource(i, new GlImportProcessor() {
-                    @SneakyThrows
-                    @Nullable
-                    @Override
-                    public String loadImport(boolean inline, String name) {
-                        return IOUtils.toString(resource.get().getInputStream(), StandardCharsets.UTF_8);
-                    }
-                }.readSource(readResourceAsString(resource.get().getInputStream())));
-            } else file_present = false;
-            glCompileShader(i);
-            if (glGetShaderi(i, GL_COMPILE_STATUS) == 0 || !file_present) {
-                String shaderInfo = StringUtils.trim(glGetShaderInfoLog(i, 32768));
-                throw new IOException("Couldn't compile " + type.name + " program (" + name + ") : " + shaderInfo);
+    public static int loadShaderProgram(String name, ShaderType type) throws IOException {
+        boolean file_present = true;
+        ResourceFactory resourceFactory = MinecraftClient.getInstance().getResourceManager();
+        Optional<Resource> resource = resourceFactory.getResource(Identifier.of("renderer", "shader/" + name + type.fileExtension));
+
+        val source = new StringBuilder();
+
+        InputStream inputStream = resource.get().getInputStream();
+            /*if (resource.isPresent()) {
+                inputStream = resource.get().getInputStream();
+            }*/
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                source.append(line).append("\n");
             }
-            return i;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return 0;
-    }
 
-    private static String readResourceAsString(InputStream inputStream) {
-        ByteBuffer byteBuffer = null;
-        try {
-            byteBuffer = TextureUtil.readResource(inputStream);
-            int i = byteBuffer.position();
-            byteBuffer.rewind();
-            return MemoryUtil.memASCII(byteBuffer, i);
-        } catch (IOException ignored) {
-        } finally {
-            if (byteBuffer != null) {
-                MemoryUtil.memFree(byteBuffer);
-            }
+        int shaderID = glCreateShader(type.glType);
+
+        GlStateManager.glShaderSource(shaderID, source.toString());
+        GlStateManager.glCompileShader(shaderID);
+
+        if (GlStateManager.glGetShaderi(shaderID, GL_COMPILE_STATUS) == 0) {
+
+            String errorLog = StringUtils.trim(GlStateManager.glGetShaderInfoLog(shaderID, 32768));
+
+            throw new IOException("Failed to compile shader " + type.name + " program (" + name + ") : " + errorLog + ". Features that utilise this " +
+                    "shader will not work correctly, if at all");
+                /*val errorMessage = "Failed to compile shader $fileName${type.extension}. Features that utilise this " +
+                        "shader will not work correctly, if at all";
+                val errorLog = StringUtils.trim(glGetShaderInfoLog(shaderID, 32768));
+
+                if (inWorld()) {
+                    ErrorManager.logErrorWithData(
+                            Exception("Shader compilation error."),
+                            errorMessage,
+                            "GLSL Compilation Error:\n" to errorLog,
+                            )
+                } else {
+                    ChatUtils.consoleLog("$errorMessage $errorLog")
+                }
+
+                return -1;*/
         }
-        return null;
+        return shaderID;
     }
 
     public enum ShaderType {
