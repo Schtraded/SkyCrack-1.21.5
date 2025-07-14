@@ -7,7 +7,7 @@ import net.straded.skycrack.render.shader.ShaderManager;
 @UtilityClass
 public class RenderSystem {
     public void init() {
-        ShaderManager.init();
         BufferManager.init();
+        ShaderManager.init();
     }
 }

@@ -35,6 +35,7 @@ public class RenderHelper {
     }
 
     public void endTri(WorldBuffer buffer) {
+        //glDepthRange(0, 0.7);
         glEnable(GL_BLEND);
         glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_CULL_FACE);
@@ -43,6 +44,7 @@ public class RenderHelper {
         glDepthMask(true);
         glEnable(GL_CULL_FACE);
         glDisable(GL_BLEND);
+        glDepthRange(0, 1);
     }
 
     public void drawTri(WorldBuffer buffer, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, Color color) {

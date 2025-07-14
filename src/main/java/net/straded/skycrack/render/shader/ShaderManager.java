@@ -15,6 +15,7 @@ import net.minecraft.util.Identifier;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.opengl.GL33;
 import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
@@ -69,12 +70,12 @@ public class ShaderManager {
 
         int shaderID = glCreateShader(type.glType);
 
-        GlStateManager.glShaderSource(shaderID, source.toString());
-        GlStateManager.glCompileShader(shaderID);
+        GL33.glShaderSource(shaderID, source.toString());
+        GL33.glCompileShader(shaderID);
 
-        if (GlStateManager.glGetShaderi(shaderID, GL_COMPILE_STATUS) == 0) {
+        if (GL33.glGetShaderi(shaderID, GL_COMPILE_STATUS) == 0) {
 
-            String errorLog = StringUtils.trim(GlStateManager.glGetShaderInfoLog(shaderID, 32768));
+            String errorLog = StringUtils.trim(GL33.glGetShaderInfoLog(shaderID, 32768));
 
             throw new IOException("Failed to compile shader " + type.name + " program (" + name + ") : " + errorLog + ". Features that utilise this " +
                     "shader will not work correctly, if at all");
@@ -99,7 +100,7 @@ public class ShaderManager {
 
     public enum ShaderType {
         VERTEX("vertex", ".vsh", GL_VERTEX_SHADER),
-        FRAGMENT("fragment", ".fsh", GL_FRAGMENT_SHADER);;
+        FRAGMENT("fragment", ".fsh", GL_FRAGMENT_SHADER);
         private final String name;
         private final String fileExtension;
         private final int glType;

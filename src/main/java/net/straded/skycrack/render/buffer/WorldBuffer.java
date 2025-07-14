@@ -45,9 +45,11 @@ public class WorldBuffer {
         glEnableVertexAttribArray(1);
 
         BufferManager.unbindBuffer();
+
         shader.bind();
         BufferManager.draw(drawMode, this.vertices.size());
         shader.unbind();
+
         BufferManager.unbind();
     }
 
@@ -58,14 +60,12 @@ public class WorldBuffer {
             floats.add(vertex.getX());
             floats.add(vertex.getY());
             floats.add(vertex.getZ());
-
         }
         for (Vertex vertex : vertices) {
             floats.add(vertex.getR());
             floats.add(vertex.getG());
             floats.add(vertex.getB());
             floats.add(vertex.getA());
-
         }
         Float[] floatArray = new Float[floats.size()];
         floats.toArray(floatArray);
